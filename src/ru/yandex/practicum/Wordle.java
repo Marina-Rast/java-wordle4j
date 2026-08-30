@@ -33,6 +33,7 @@ public class Wordle {
                         System.out.println(game.getHint(suggestion));
                     } catch (WordNotFoundException | InvalidWordLengthException |
                              InvalidCharacterException | GameStateException e) {
+                        System.out.println("Ошибка при подсказке: " + e.getMessage());
                     }
 
                     if (game.isWordGuessed()) {
