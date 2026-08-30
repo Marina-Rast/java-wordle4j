@@ -7,20 +7,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WordleDictionaryLoader {
-    public List<String> loadDictionary(String fileName) {
-        List<String> words = new ArrayList<>();
+
+    public List<String> loadDictionary(String fileName) throws DictionaryLoadException {
+        List<String> allWords = new ArrayList<>();
+
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                line = line.replace("ё", "е").toLowerCase();
+                line = line.replace("ё", "е").toLowerCase().trim();
                 if (line.length() == 5) {
-                    words.add(line);
+                    allWords.add(line);
                 }
             }
         } catch (IOException e) {
-            System.out.println("Ошибка при чтении файла: " + e.getMessage());
+            throw new DictionaryLoadException("Не удалось загрузить словарь: " + fileName, e);
         }
-        return words;
-    }
 
+        if (allWords.isEmpty()) {
+            throw new DictionaryLoadException("Словарь пуст или не содержит слов из 5 букв");
+        }
+
+        return allWords;
+    }
 }

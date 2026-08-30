@@ -20,4 +20,8 @@ public class WordleDictionary {
         int index = random.nextInt(words.size());
         return words.get(index);
     }
+
+    public List<String> getWords() {
+        return words;
+    }
 }

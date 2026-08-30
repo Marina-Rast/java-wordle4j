@@ -10,33 +10,45 @@ import static org.junit.jupiter.api.Assertions.*;
 class WordleTest {
 
     private WordleDictionary dictionary;
-    private WordleGame game;
 
     @BeforeEach
     void setUp() {
         List<String> words = List.of("герой", "гонец", "котёл", "носки", "ложка", "лилия");
         dictionary = new WordleDictionary(words);
-        game = new WordleGame(dictionary);
     }
 
     @Test
     void testGameHasSixAttempts() {
+        final WordleGame game = new WordleGame(dictionary);
         assertEquals(6, game.getRemainingAttempts());
     }
 
     @Test
-    void testWordGuessCorrect() throws WordNotFoundException {
+    void testGameStartsNotGuessed() {
+        final WordleGame game = new WordleGame(dictionary);
+        assertFalse(game.isWordGuessed());
+    }
+
+    @Test
+    void testGetAnswerReturnsWord() {
+        final WordleGame game = new WordleGame(dictionary);
+        String answer = game.getAnswer();
+        assertNotNull(answer);
+        assertEquals(5, answer.length());
+    }
+
+    @Test
+    void testWordGuessCorrect() throws Exception {
+        final WordleGame game = new WordleGame(dictionary);
         String answer = game.getAnswer();
         assertTrue(game.wordGuess(answer));
         assertTrue(game.isWordGuessed());
     }
 
     @Test
-    void testWordGuessWrong() throws WordNotFoundException {
-        String wrongWord = "носки";
-        if (wrongWord.equals(game.getAnswer())) {
-            wrongWord = "ложка";
-        }
+    void testWordGuessWrong() throws Exception {
+        final WordleGame game = new WordleGame(dictionary);
+        final String wrongWord = game.getAnswer().equals("носки") ? "ложка" : "носки";
 
         boolean result = game.wordGuess(wrongWord);
         assertFalse(result);
@@ -45,48 +57,66 @@ class WordleTest {
     }
 
     @Test
-    void testWordGuessDecreasesAttempts() throws WordNotFoundException {
-        String wrongWord = "носки";
-        if (wrongWord.equals(game.getAnswer())) {
-            wrongWord = "ложка";
-        }
+    void testWordGuessDecreasesAttempts() throws Exception {
+        final WordleGame game = new WordleGame(dictionary);
+        final String wrongWord = game.getAnswer().equals("носки") ? "ложка" : "носки";
 
         game.wordGuess(wrongWord);
         assertEquals(5, game.getRemainingAttempts());
     }
 
     @Test
+    void testWordGuessAddsToHistory() throws Exception {
+        final WordleGame game = new WordleGame(dictionary);
+        String word = "носки";
+        game.wordGuess(word);
+        assertEquals(1, game.getHistory().size());
+        assertEquals(word, game.getHistory().get(0));
+    }
+
+    @Test
     void testWordGuessThrowsExceptionWhenWordNotFound() {
+        final WordleGame game = new WordleGame(dictionary);
         assertThrows(WordNotFoundException.class, () -> game.wordGuess("абвгд"));
         assertEquals(6, game.getRemainingAttempts());
     }
 
     @Test
-    void testGetHint() throws WordNotFoundException {
-        game = new WordleGame(dictionary, "герой");
-        assertEquals("+^-^-", game.getHint("гонец"));
+    void testWordGuessThrowsExceptionWhenWordTooShort() {
+        final WordleGame game = new WordleGame(dictionary);
+        assertThrows(InvalidWordLengthException.class, () -> game.wordGuess("абвг"));
     }
 
     @Test
-    void testGetHintAllCorrect() throws WordNotFoundException {
-        game = new WordleGame(dictionary, "герой");
-        assertEquals("+++++", game.getHint("герой"));
+    void testWordGuessThrowsExceptionWhenWordTooLong() {
+        final WordleGame game = new WordleGame(dictionary);
+        assertThrows(InvalidWordLengthException.class, () -> game.wordGuess("абвгде"));
     }
 
     @Test
-    void testGetHintAllWrong() throws WordNotFoundException {
-        game = new WordleGame(dictionary, "герой");
-        assertEquals("-----", game.getHint("лапша"));
+    void testWordGuessThrowsExceptionWhenInvalidCharacters() {
+        final WordleGame game = new WordleGame(dictionary);
+        assertThrows(InvalidCharacterException.class, () -> game.wordGuess("abcde"));
     }
 
     @Test
-    void testHasMoreAttempts() throws WordNotFoundException {
+    void testGameStateExceptionWhenNoAttemptsLeft() throws Exception {
+        final WordleGame game = new WordleGame(dictionary);
+        final String wrongWord = game.getAnswer().equals("носки") ? "ложка" : "носки";
+
+        for (int i = 0; i < 6; i++) {
+            game.wordGuess(wrongWord);
+        }
+
+        assertThrows(GameStateException.class, () -> game.wordGuess(wrongWord));
+    }
+
+    @Test
+    void testHasMoreAttempts() throws Exception {
+        final WordleGame game = new WordleGame(dictionary);
         assertTrue(game.hasMoreAttempts());
 
-        String wrongWord = "носки";
-        if (wrongWord.equals(game.getAnswer())) {
-            wrongWord = "ложка";
-        }
+        final String wrongWord = game.getAnswer().equals("носки") ? "ложка" : "носки";
 
         for (int i = 0; i < 6; i++) {
             game.wordGuess(wrongWord);
@@ -96,30 +126,29 @@ class WordleTest {
     }
 
     @Test
-    void testGameStartsNotGuessed() {
-        assertFalse(game.isWordGuessed());
+    void testGetHint() {
+        final WordleGame game = new WordleGame(dictionary, "герой");
+        assertEquals("+^-^-", game.getHint("гонец"));
     }
 
     @Test
-    void testGetAnswerReturnsWord() {
-        String answer = game.getAnswer();
-        assertNotNull(answer);
-        assertEquals(5, answer.length());
+    void testGetHintAllCorrect() {
+        final WordleGame game = new WordleGame(dictionary, "герой");
+        assertEquals("+++++", game.getHint("герой"));
+    }
+
+    @Test
+    void testGetHintAllWrong() {
+        final WordleGame game = new WordleGame(dictionary, "герой");
+        assertEquals("-----", game.getHint("лапша"));
     }
 
     @Test
     void testGetComputerSuggestion() {
+        final WordleGame game = new WordleGame(dictionary);
         String suggestion = game.getComputerSuggestion();
         assertNotNull(suggestion);
         assertEquals(5, suggestion.length());
         assertTrue(dictionary.contains(suggestion));
-    }
-
-    @Test
-    void testWordGuessAddsToHistory() throws WordNotFoundException {
-        String word = "носки";
-        game.wordGuess(word);
-        assertEquals(1, game.getHistory().size());
-        assertEquals(word, game.getHistory().get(0));
     }
 }
